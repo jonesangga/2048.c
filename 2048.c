@@ -34,7 +34,9 @@ void getColors(uint8_t value, uint8_t scheme, uint8_t *foreground, uint8_t *back
 	// alternatively we could have returned a struct with two variables
 }
 
-uint8_t getDigitCount(uint32_t number)
+// TODO: Use switch statement and pass slot value.
+uint8_t
+getDigitCount(uint32_t number)
 {
 	uint8_t count = 0;
 	do
@@ -50,10 +52,9 @@ void drawBoard(uint8_t board[SIZE][SIZE], uint8_t scheme, uint32_t score)
 	uint8_t x, y, fg, bg;
 	printf("\033[H"); // move cursor to 0,0
 	printf("2048.c %17u pts\n\n", score);
-	for (y = 0; y < SIZE; y++)
-	{
-		for (x = 0; x < SIZE; x++)
-		{
+
+	for (y = 0; y < SIZE; y++) {
+		for (x = 0; x < SIZE; x++) {
 			// send the addresses of the foreground and background variables,
 			// so that they can be modified by the getColors function
 			getColors(board[x][y], scheme, &fg, &bg);
@@ -93,30 +94,26 @@ void drawBoard(uint8_t board[SIZE][SIZE], uint8_t scheme, uint32_t score)
 	printf("\033[A"); // one line up
 }
 
-uint8_t findTarget(uint8_t array[SIZE], uint8_t x, uint8_t stop)
+// Find row number above to move an entry 'x' in a column.
+uint8_t
+findTarget(uint8_t array[SIZE], uint8_t x, uint8_t stop)
 {
 	uint8_t t;
+
 	// if the position is already on the first, don't evaluate
-	if (x == 0)
-	{
-		return x;
-	}
-	for (t = x - 1;; t--)
-	{
-		if (array[t] != 0)
-		{
-			if (array[t] != array[x])
-			{
+	if (x == 0) return x;
+
+	for (t = x - 1;; t--) {
+		if (array[t] != 0) {
+			if (array[t] != array[x]) {
 				// merge is not possible, take next position
 				return t + 1;
 			}
 			return t;
 		}
-		else
-		{
-			// we should not slide further, return this one
-			if (t == stop)
-			{
+		else {
+			if (t == stop) {
+                // we should not slide further, return this one
 				return t;
 			}
 		}
@@ -125,26 +122,25 @@ uint8_t findTarget(uint8_t array[SIZE], uint8_t x, uint8_t stop)
 	return x;
 }
 
-bool slideArray(uint8_t array[SIZE], uint32_t *score)
+// Slide a column up.
+//
+bool
+slideArray(uint8_t array[SIZE], uint32_t *score)
 {
 	bool success = false;
 	uint8_t x, t, stop = 0;
 
-	for (x = 0; x < SIZE; x++)
-	{
-		if (array[x] != 0)
-		{
+	for (x = 0; x < SIZE; x++) { // For every row position in the column.
+		if (array[x] != 0) {
 			t = findTarget(array, x, stop);
+
 			// if target is not original position, then move or merge
-			if (t != x)
-			{
+			if (t != x) {
 				// if target is zero, this is a move
-				if (array[t] == 0)
-				{
+				if (array[t] == 0) {
 					array[t] = array[x];
 				}
-				else if (array[t] == array[x])
-				{
+				else if (array[t] == array[x]) {
 					// merge (increase power of two)
 					array[t]++;
 					// increase score
@@ -152,7 +148,8 @@ bool slideArray(uint8_t array[SIZE], uint32_t *score)
 					// set stop to avoid double merge
 					stop = t + 1;
 				}
-				array[x] = 0;
+
+				array[x] = 0;       // Empty this position.
 				success = true;
 			}
 		}
@@ -160,14 +157,15 @@ bool slideArray(uint8_t array[SIZE], uint32_t *score)
 	return success;
 }
 
-void rotateBoard(uint8_t board[SIZE][SIZE])
+// Rotate 90deg counter-clockwise.
+//
+void
+rotateBoard(uint8_t board[SIZE][SIZE])
 {
 	uint8_t i, j, n = SIZE;
 	uint8_t tmp;
-	for (i = 0; i < n / 2; i++)
-	{
-		for (j = i; j < n - i - 1; j++)
-		{
+	for (i = 0; i < n / 2; i++) {
+		for (j = i; j < n - i - 1; j++) {
 			tmp = board[i][j];
 			board[i][j] = board[j][n - i - 1];
 			board[j][n - i - 1] = board[n - i - 1][n - j - 1];
@@ -181,7 +179,7 @@ bool moveUp(uint8_t board[SIZE][SIZE], uint32_t *score)
 {
 	bool success = false;
 	uint8_t x;
-	for (x = 0; x < SIZE; x++)
+	for (x = 0; x < SIZE; x++)  // For every column slide it up.
 	{
 		success |= slideArray(board[x], score);
 	}
@@ -221,33 +219,32 @@ bool moveRight(uint8_t board[SIZE][SIZE], uint32_t *score)
 	return success;
 }
 
-bool findPairDown(uint8_t board[SIZE][SIZE])
+// Return true if their is slot that has same value with below it.
+//
+bool
+findPairDown(uint8_t board[SIZE][SIZE])
 {
-	bool success = false;
 	uint8_t x, y;
-	for (x = 0; x < SIZE; x++)
-	{
-		for (y = 0; y < SIZE - 1; y++)
-		{
+	for (x = 0; x < SIZE; x++) {
+		for (y = 0; y < SIZE - 1; y++) {
 			if (board[x][y] == board[x][y + 1])
 				return true;
 		}
 	}
-	return success;
+	return false;
 }
 
-uint8_t countEmpty(uint8_t board[SIZE][SIZE])
+// Return the number of empty slot.
+//
+uint8_t
+countEmpty(uint8_t board[SIZE][SIZE])
 {
 	uint8_t x, y;
 	uint8_t count = 0;
-	for (x = 0; x < SIZE; x++)
-	{
-		for (y = 0; y < SIZE; y++)
-		{
+	for (x = 0; x < SIZE; x++) {
+		for (y = 0; y < SIZE; y++) {
 			if (board[x][y] == 0)
-			{
 				count++;
-			}
 		}
 	}
 	return count;
@@ -276,18 +273,16 @@ void addRandom(uint8_t board[SIZE][SIZE])
 	uint8_t r, len = 0;
 	uint8_t n, list[SIZE * SIZE][2];
 
-	if (!initialized)
-	{
+    // Set random seed if it is the first time.
+	if (!initialized) {
 		srand(time(NULL));
 		initialized = true;
 	}
 
-	for (x = 0; x < SIZE; x++)
-	{
-		for (y = 0; y < SIZE; y++)
-		{
-			if (board[x][y] == 0)
-			{
+    // Collect all empty slot positions.
+	for (x = 0; x < SIZE; x++) {
+		for (y = 0; y < SIZE; y++) {
+			if (board[x][y] == 0) {
 				list[len][0] = x;
 				list[len][1] = y;
 				len++;
@@ -295,8 +290,8 @@ void addRandom(uint8_t board[SIZE][SIZE])
 		}
 	}
 
-	if (len > 0)
-	{
+    // TODO: Is it necessary to test len > 0?
+	if (len > 0) {
 		r = rand() % len;
 		x = list[r][0];
 		y = list[r][1];
@@ -305,13 +300,15 @@ void addRandom(uint8_t board[SIZE][SIZE])
 	}
 }
 
-void initBoard(uint8_t board[SIZE][SIZE])
+// Board is initialized with 2 numbers (either 2 or 4 with ratio 9:1) in random locations.
+// Board is stored in column-major order.
+//
+void 
+initBoard(uint8_t board[SIZE][SIZE])
 {
 	uint8_t x, y;
-	for (x = 0; x < SIZE; x++)
-	{
-		for (y = 0; y < SIZE; y++)
-		{
+	for (x = 0; x < SIZE; x++) {
+		for (y = 0; y < SIZE; y++) {
 			board[x][y] = 0;
 		}
 	}
@@ -420,10 +417,10 @@ bool testSucceed()
 			break;
 		}
 	}
+
 	if (success)
-	{
 		printf("All %u tests executed successfully\n", tests);
-	}
+
 	return success;
 }
 
@@ -500,59 +497,53 @@ int main(int argc, char *argv[])
 			puts("\nError! Cannot read keyboard input!");
 			break;
 		}
-		switch (c)
-		{
-		case 97:  // 'a' key
-		case 104: // 'h' key
-		case 68:  // left arrow
-			success = moveLeft(board, &score);
-			break;
-		case 100: // 'd' key
-		case 108: // 'l' key
-		case 67:  // right arrow
-			success = moveRight(board, &score);
-			break;
-		case 119: // 'w' key
-		case 107: // 'k' key
-		case 65:  // up arrow
-			success = moveUp(board, &score);
-			break;
-		case 115: // 's' key
-		case 106: // 'j' key
-		case 66:  // down arrow
-			success = moveDown(board, &score);
-			break;
-		default:
-			success = false;
+		switch (c) {
+            case 97:  // 'a' key
+            case 104: // 'h' key
+            case 68:  // left arrow
+                success = moveLeft(board, &score);
+                break;
+            case 100: // 'd' key
+            case 108: // 'l' key
+            case 67:  // right arrow
+                success = moveRight(board, &score);
+                break;
+            case 119: // 'w' key
+            case 107: // 'k' key
+            case 65:  // up arrow
+                success = moveUp(board, &score);
+                break;
+            case 115: // 's' key
+            case 106: // 'j' key
+            case 66:  // down arrow
+                success = moveDown(board, &score);
+                break;
+            default:
+                success = false;
 		}
-		if (success)
-		{
+
+		if (success) {
 			drawBoard(board, scheme, score);
 			usleep(150 * 1000); // 150 ms
 			addRandom(board);
 			drawBoard(board, scheme, score);
-			if (gameEnded(board))
-			{
+
+			if (gameEnded(board)) {
 				printf("         GAME OVER          \n");
 				break;
 			}
 		}
-		if (c == 'q')
-		{
+		if (c == 'q') {
 			printf("        QUIT? (y/n)         \n");
 			c = getchar();
 			if (c == 'y')
-			{
 				break;
-			}
 			drawBoard(board, scheme, score);
 		}
-		if (c == 'r')
-		{
+		if (c == 'r') {
 			printf("       RESTART? (y/n)       \n");
 			c = getchar();
-			if (c == 'y')
-			{
+			if (c == 'y') {
 				initBoard(board);
 				score = 0;
 			}
