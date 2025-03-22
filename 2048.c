@@ -57,7 +57,8 @@ getDigitCount(uint8_t number)
     }
 }
 
-void drawBoard(uint8_t board[SIZE][SIZE], uint8_t scheme, uint32_t score)
+void
+drawBoard(uint8_t board[SIZE][SIZE], uint8_t scheme, uint32_t score)
 {
     uint8_t x, y, fg, bg;
     printf("\033[H"); // move cursor to 0,0
@@ -229,7 +230,7 @@ bool moveRight(uint8_t board[SIZE][SIZE], uint32_t *score)
     return success;
 }
 
-// Return true if their is slot that has same value with below it.
+// Check if their is a slot that has same value with the slot below it.
 //
 bool
 findPairDown(uint8_t board[SIZE][SIZE])
@@ -244,8 +245,6 @@ findPairDown(uint8_t board[SIZE][SIZE])
     return false;
 }
 
-// Return the number of empty slot.
-//
 uint8_t
 countEmpty(uint8_t board[SIZE][SIZE])
 {
@@ -276,18 +275,21 @@ bool gameEnded(uint8_t board[SIZE][SIZE])
     return ended;
 }
 
-void addRandom(uint8_t board[SIZE][SIZE])
+// Fill one of the empty slot with either 1 or 2 (with ratio 9:1).
+//
+void
+addRandom(uint8_t board[SIZE][SIZE])
 {
-    static bool initialized = false;
-    uint8_t x, y;
-    uint8_t r, len = 0;
-    uint8_t n, list[SIZE * SIZE][2];
-
     // Set random seed if it is the first time.
+    static bool initialized = false;
     if (!initialized) {
-        srand(time(NULL));
         initialized = true;
+        srand(time(NULL));
     }
+
+    uint8_t x, y;
+    uint8_t len = 0;                // Number of empty slot.
+    uint8_t list[SIZE * SIZE][2];   // List of empty slot positions.
 
     // Collect all empty slot positions.
     for (x = 0; x < SIZE; x++) {
@@ -300,17 +302,16 @@ void addRandom(uint8_t board[SIZE][SIZE])
         }
     }
 
-    // TODO: Is it necessary to test len > 0?
+    // If there is empty slot fill one of them with either 1 or 2 (with ratio 9:1).
     if (len > 0) {
-        r = rand() % len;
+        uint8_t r = rand() % len;
         x = list[r][0];
         y = list[r][1];
-        n = (rand() % 10) / 9 + 1;
-        board[x][y] = n;
+        board[x][y] = (rand() % 10) / 9 + 1;
     }
 }
 
-// Board is initialized with 2 numbers (either 2 or 4 with ratio 9:1) in random locations.
+// Board is initialized with 2 numbers in random locations.
 // Board is stored in column-major order.
 //
 void 
@@ -380,49 +381,34 @@ bool testSucceed()
     uint32_t score;
 
     tests = (sizeof(data) / sizeof(data[0])) / (2 * SIZE + 1);
-    for (t = 0; t < tests; t++)
-    {
+    for (t = 0; t < tests; t++) {
         in = data + t * (2 * SIZE + 1);
         out = in + SIZE;
         points = in + 2 * SIZE;
         for (i = 0; i < SIZE; i++)
-        {
             array[i] = in[i];
-        }
+
         score = 0;
         slideArray(array, &score);
-        for (i = 0; i < SIZE; i++)
-        {
+        for (i = 0; i < SIZE; i++) {
             if (array[i] != out[i])
-            {
                 success = false;
-            }
         }
         if (score != *points)
-        {
             success = false;
-        }
-        if (success == false)
-        {
+
+        if (success == false) {
             for (i = 0; i < SIZE; i++)
-            {
                 printf("%u ", in[i]);
-            }
             printf("=> ");
             for (i = 0; i < SIZE; i++)
-            {
                 printf("%u ", array[i]);
-            }
             printf("(%u points) expected ", score);
             for (i = 0; i < SIZE; i++)
-            {
                 printf("%u ", in[i]);
-            }
             printf("=> ");
             for (i = 0; i < SIZE; i++)
-            {
                 printf("%u ", out[i]);
-            }
             printf("(%u points)\n", *points);
             break;
         }
